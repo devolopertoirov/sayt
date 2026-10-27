@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>SHEYX UC Shop</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">UC</span><b>SHEYX UC Shop</b></div>
+  <div class="bal" id="balPill">0 so‘m</div>
+</header>
+
+<main>
+  <!-- Bosh sahifa -->
+  <section class="page active" id="p-home">
+    <div class="hero">
+      <small>Hisobingiz</small>
+      <h1 id="balBig">0 so‘m</h1>
+      <button class="btn" data-go="topup">Hisobni to‘ldirish</button>
+    </div>
+    <div class="menu" id="homeMenu"></div>
+  </section>
+
+  <!-- UC narxlari -->
+  <section class="page" id="p-uc">
+    <h2>UC narxlari</h2>
+    <div class="list" id="ucList"></div>
+  </section>
+
+  <!-- To'ldirish -->
+  <section class="page" id="p-topup">
+    <h2>Hisobni to‘ldirish</h2>
+    <div class="card">
+      <small>Karta raqami</small>
+      <div class="copy" id="cardNum">—</div>
+      <small id="cardOwner"></small>
+    </div>
+    <div class="field">To‘lov cheki (rasm yoki PDF)
+      <label class="upload" id="upBox" for="receipt">
+        <img id="upPrev" alt="" hidden>
+        <span id="upText">Chekni yuklash uchun bosing</span>
+      </label>
+      <input id="receipt" type="file" accept="image/*,application/pdf" hidden>
+    </div>
+    <p class="hint">Kartaga pul o‘tkazing, to‘lov chekini yuklang va “To‘lov qildim” tugmasini bosing. Admin chekni tekshirib, summani hisobingizga qo‘shadi.</p>
+    <button class="btn wide" id="topBtn">To‘lov qildim</button>
+  </section>
+
+  <!-- Buyurtmalar -->
+  <section class="page" id="p-orders">
+    <h2>Buyurtmalarim</h2>
+    <div class="list" id="orderList"></div>
+  </section>
+
+  <!-- Reklama -->
+  <section class="page" id="p-ads">
+    <h2>Reklama ko‘rish</h2>
+    <div class="card center">
+      <p>Qisqa reklamani ko‘ring va hisobingizga bonus oling.</p>
+      <button class="btn wide" id="adBtn">Reklamani boshlash</button>
+    </div>
+  </section>
+
+  <!-- Profil -->
+  <section class="page" id="p-profile">
+    <h2>Profil</h2>
+    <div class="card" id="profileCard"></div>
+    <div class="menu">
+      <a class="row" href="https://t.me/sheyxshopbot" id="helpLink"><i>?</i><span>Yordam</span><em>›</em></a>
+    </div>
+  </section>
+</main>
+
+<nav class="nav">
+  <button data-go="home" class="on"><i>⌂</i><span>Asosiy</span></button>
+  <button data-go="uc"><i>◈</i><span>UC</span></button>
+  <button data-go="topup"><i>＋</i><span>To‘ldirish</span></button>
+  <button data-go="orders"><i>☰</i><span>Buyurtma</span></button>
+  <button data-go="profile"><i>☺</i><span>Profil</span></button>
+</nav>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <h3 id="shTitle">UC sotib olish</h3>
+  <p id="shInfo" class="hint"></p>
+  <label class="field">PUBG Mobile ID
+    <input id="pubgId" type="number" inputmode="numeric" placeholder="Masalan: 5123456789">
+  </label>
+  <button class="btn wide" id="buyBtn">Buyurtma berish</button>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
