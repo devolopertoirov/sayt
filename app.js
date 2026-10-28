@@ -5,7 +5,7 @@
 const API_BASE = "https://news-designs-fought-montreal.trycloudflare.com";
 // AdsGram SINOV rejimi: true bo'lsa test reklama chiqadi (hisoblanmaydi, mukofot berilmaydi).
 // !!! Haqiqiy blok tasdiqlangach ALBATTA false qiling, aks holda daromad va +0.01 so'm ishlamaydi.
-const ADS_DEBUG = true;
+const ADS_DEBUG = false;
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 tg?.setBackgroundColor?.("#051F20"); tg?.setHeaderColor?.("#051F20");
