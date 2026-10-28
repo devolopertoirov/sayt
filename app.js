@@ -1,6 +1,8 @@
 /* ================= SOZLAMALAR ================= */
-// Backend (aiogram + aiohttp/FastAPI) manzili. Bo'sh bo'lsa demo rejim ishlaydi.
-const API_BASE = "https://sheyxshop.netlify.app";            // masalan: "https://sizning-domen.uz"
+// !!! MUHIM: bu yerga main.py ishlayotgan serverning HTTPS manzilini yozing (oxirida "/" bo'lmasin).
+// Masalan: "https://abc123.trycloudflare.com"  yoki  "https://sizning-nom.ngrok-free.app"
+// Bo'sh qoldirilsa mini app DEMO rejimda ishlaydi va botga HECH NARSA yuborilmaydi.
+const API_BASE = "";
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 tg?.setBackgroundColor?.("#051F20"); tg?.setHeaderColor?.("#051F20");
@@ -33,7 +35,7 @@ async function api(path, method = "GET", body) {
   if (!API_BASE) throw new Error("demo");
   const r = await fetch(API_BASE + path, {
     method,
-    headers: { ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }), "X-Init-Data": tg?.initData || "" },
+    headers: { ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }), "X-Init-Data": tg?.initData || "", "ngrok-skip-browser-warning": "1" },
     body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
   });
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || "Xatolik");
@@ -88,25 +90,44 @@ function renderProfile() {
 }
 
 /* ================= MA'LUMOT YUKLASH ================= */
-async function init() {
-  renderHome(); renderProfile();
+async function loadConfig(first) {
   try {
     const c = await api("/api/config");
     S.prices = c.prices; S.card = c.card; S.adBlock = c.adsgram_block_id || ""; S.balance = c.balance || 0;
     S.adReward = c.ad_reward ?? 0.01; S.adsEntry = !!c.ads_entry;
-  } catch { S.prices = DEMO_PRICES; }
+  } catch (e) {
+    if (e.message === "demo") { if (first) S.prices = DEMO_PRICES; }
+    else { if (first) toast("Serverga ulanib bo‘lmadi: " + e.message); return; }
+  }
   $("#cardNum").textContent = S.card.number;
   $("#cardOwner").textContent = S.card.owner;
   renderBalance(); renderPrices();
   $("#adInfo").textContent = S.adBlock
     ? "Qisqa reklamani oxirigacha ko‘ring: har bir reklama uchun hisobingizga +" + fmt(S.adReward) + " so‘m qo‘shiladi. Limit yo‘q, reklama ixtiyoriy."
     : "Reklama hozircha mavjud emas.";
+}
+async function init() {
+  renderHome(); renderProfile();
+  await loadConfig(true);
+  if (!API_BASE) {
+    document.body.classList.add("demo-on");
+    document.body.insertAdjacentHTML("afterbegin", '<div class="demo">⚠ Demo rejim: server ulanmagan (app.js → API_BASE)</div>');
+    return;
+  }
   // Mini appga kirganda 1 marta (eng katta admin yoqib qo'ygan bo'lsa). Foydalanuvchi yopib davom etishi mumkin.
   if (S.adsEntry && tg?.initData) showAd().then(done => done && refreshBalance());
+  // Bot (admin panel) tomonidagi o'zgarishlar — balans, narxlar, buyurtma holati — mini appda avtomatik yangilanadi.
+  const sync = () => {
+    if (document.hidden) return;
+    loadConfig(false);
+    if ($("#p-orders").classList.contains("active")) loadOrders();
+  };
+  setInterval(sync, 6000);
+  document.addEventListener("visibilitychange", sync);
 }
 async function loadOrders() {
   try { S.orders = (await api("/api/orders")).orders; }
-  catch { /* demo: mavjud ro'yxat qoladi */ }
+  catch (e) { if (e.message !== "demo") return; }
   renderOrders();
 }
 
