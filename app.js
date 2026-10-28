@@ -2,7 +2,7 @@
 // !!! MUHIM: bu yerga main.py ishlayotgan serverning HTTPS manzilini yozing (oxirida "/" bo'lmasin).
 // Masalan: "https://abc123.trycloudflare.com"  yoki  "https://sizning-nom.ngrok-free.app"
 // Bo'sh qoldirilsa mini app DEMO rejimda ishlaydi va botga HECH NARSA yuborilmaydi.
-const API_BASE = "";
+const API_BASE = "https://sheyxshop/netlify.app";
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 tg?.setBackgroundColor?.("#051F20"); tg?.setHeaderColor?.("#051F20");
