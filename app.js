@@ -3,6 +3,9 @@
 // Masalan: "https://abc123.trycloudflare.com"  yoki  "https://sizning-nom.ngrok-free.app"
 // Bo'sh qoldirilsa mini app DEMO rejimda ishlaydi va botga HECH NARSA yuborilmaydi.
 const API_BASE = "https://news-designs-fought-montreal.trycloudflare.com";
+// AdsGram SINOV rejimi: true bo'lsa test reklama chiqadi (hisoblanmaydi, mukofot berilmaydi).
+// !!! Haqiqiy blok tasdiqlangach ALBATTA false qiling, aks holda daromad va +0.01 so'm ishlamaydi.
+const ADS_DEBUG = true;
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 tg?.setBackgroundColor?.("#051F20"); tg?.setHeaderColor?.("#051F20");
@@ -64,7 +67,7 @@ function renderHome() {
     ["◈", "UC narxlari", "PUBG Mobile UC sotib olish", "uc"],
     ["＋", "Hisobni to‘ldirish", "Karta orqali to‘lov", "topup"],
     ["☰", "Buyurtmalarim", "Holat va tarix", "orders"],
-    ["▶", "Reklama ko‘rish", "Bonus oling", "ads"],
+    ["▶", "Reklama ko‘rish", "Reklama ko‘ring: mukofot +0,01 so‘m", "ads"],
     ["☺", "Profil", "Ma’lumotlaringiz", "profile"],
   ];
   $("#homeMenu").innerHTML = items.map(([i, t, s, g]) =>
@@ -102,9 +105,13 @@ async function loadConfig(first) {
   $("#cardNum").textContent = S.card.number;
   $("#cardOwner").textContent = S.card.owner;
   renderBalance(); renderPrices();
+  const rw = fmt(S.adReward);
+  $("#adRewardAmt").textContent = "+" + rw + " so‘m";
+  $("#adBtn").textContent = "Reklamani boshlash (+" + rw + " so‘m)";
   $("#adInfo").textContent = S.adBlock
-    ? "Qisqa reklamani oxirigacha ko‘ring: har bir reklama uchun hisobingizga +" + fmt(S.adReward) + " so‘m qo‘shiladi. Limit yo‘q, reklama ixtiyoriy."
+    ? "Reklamani oxirigacha ko‘ring: hisobingizga +" + rw + " so‘m qo‘shiladi. Limit yo‘q, reklama ixtiyoriy."
     : "Reklama hozircha mavjud emas.";
+  $("#adInfoEn").textContent = "Reward: +" + rw + " UZS is added to your balance after you watch the ad to the end. The balance is used to buy UC in this app. The ad is optional.";
 }
 async function init() {
   renderHome(); renderProfile();
@@ -193,10 +200,20 @@ $("#topBtn").onclick = async () => {
 
 /* ================= REKLAMA (Adsgram) ================= */
 // Pul serverda AdsGram "Reward URL" orqali qo'shiladi (+0.01 so'm), shuning uchun balansni biroz kutib yangilaymiz.
+function loadAdsSdk() {            // SDK yuklanmagan bo'lsa, qayta yuklab ko'radi
+  return new Promise(res => {
+    if (window.Adsgram) return res(true);
+    const sc = document.createElement("script");
+    sc.src = "https://sad.adsgram.ai/js/sad.min.js";
+    sc.onload = () => res(!!window.Adsgram); sc.onerror = () => res(false);
+    document.head.appendChild(sc);
+  });
+}
 async function showAd() {
-  if (!S.adBlock || !window.Adsgram) return false;
-  try { const res = await window.Adsgram.init({ blockId: S.adBlock }).show(); return !!res?.done; }
-  catch { return false; }
+  S.adErr = "";
+  if (!S.adBlock || !(await loadAdsSdk())) return false;
+  try { const res = await window.Adsgram.init(ADS_DEBUG ? { blockId: S.adBlock, debug: true, debugBannerType: "FullscreenMedia" } : { blockId: S.adBlock }).show(); return !!res?.done; }
+  catch (e) { S.adErr = e?.description || e?.message || ""; return false; }
 }
 function refreshBalance() {
   [2500, 7000].forEach(ms => setTimeout(async () => {
@@ -204,12 +221,13 @@ function refreshBalance() {
   }, ms));
 }
 $("#adBtn").onclick = async () => {
-  if (!S.adBlock || !window.Adsgram) return toast("Reklama hozircha mavjud emas");
+  if (!S.adBlock) return toast("Server Block ID yubormadi: botda Block ID va 'Reklama yoqilgan' ekanini tekshiring");
+  if (!(await loadAdsSdk())) return toast("AdsGram skripti yuklanmadi (internet, DNS yoki reklama bloker)");
   const btn = $("#adBtn"); btn.disabled = true;
   const done = await showAd();
   btn.disabled = false;
   if (done) { toast("Bonus hisobingizga qo‘shilmoqda..."); refreshBalance(); }
-  else toast("Reklama tugallanmadi");
+  else toast("Reklama tugallanmadi" + (S.adErr ? ": " + S.adErr : ""));
 };
 
 init();
