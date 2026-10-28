@@ -11,7 +11,7 @@ const S = {
   balance: 0,
   prices: [],
   card: { number: "8600 0000 0000 0000", owner: "SHEYX" },
-  adBlock: "",
+  adBlock: "", adReward: 0.01, adsEntry: false,
   orders: [],
   selUC: null,
 };
@@ -23,7 +23,7 @@ const DEMO_PRICES = [
 /* ================= YORDAMCHILAR ================= */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-const fmt = n => Number(n).toLocaleString("ru-RU").replace(/\u00a0/g, " ");
+const fmt = n => Number(n).toLocaleString("ru-RU", { maximumFractionDigits: 2 }).replace(/\u00a0/g, " ");
 const sum = n => fmt(n) + " so‘m";
 function toast(t) {
   const el = $("#toast"); el.textContent = t; el.classList.add("show");
@@ -93,10 +93,16 @@ async function init() {
   try {
     const c = await api("/api/config");
     S.prices = c.prices; S.card = c.card; S.adBlock = c.adsgram_block_id || ""; S.balance = c.balance || 0;
+    S.adReward = c.ad_reward ?? 0.01; S.adsEntry = !!c.ads_entry;
   } catch { S.prices = DEMO_PRICES; }
   $("#cardNum").textContent = S.card.number;
   $("#cardOwner").textContent = S.card.owner;
   renderBalance(); renderPrices();
+  $("#adInfo").textContent = S.adBlock
+    ? "Qisqa reklamani oxirigacha ko‘ring: har bir reklama uchun hisobingizga +" + fmt(S.adReward) + " so‘m qo‘shiladi. Limit yo‘q, reklama ixtiyoriy."
+    : "Reklama hozircha mavjud emas.";
+  // Mini appga kirganda 1 marta (eng katta admin yoqib qo'ygan bo'lsa). Foydalanuvchi yopib davom etishi mumkin.
+  if (S.adsEntry && tg?.initData) showAd().then(done => done && refreshBalance());
 }
 async function loadOrders() {
   try { S.orders = (await api("/api/orders")).orders; }
@@ -153,6 +159,8 @@ $("#topBtn").onclick = async () => {
   if (f.size > 10 * 1024 * 1024) return toast("Fayl 10 MB dan oshmasligi kerak");
   const fd = new FormData(); fd.append("receipt", f);
   const btn = $("#topBtn"); btn.disabled = true;
+  // Chek yuborilganda reklama ko'rsatiladi (ixtiyoriy: yopilsa ham chek yuboriladi)
+  if (S.adBlock && tg?.initData) { const done = await showAd(); if (done) refreshBalance(); }
   try { await api("/api/topup", "POST", fd); }
   catch (err) {
     if (err.message !== "demo") { btn.disabled = false; return toast(err.message); }
@@ -163,15 +171,24 @@ $("#topBtn").onclick = async () => {
 };
 
 /* ================= REKLAMA (Adsgram) ================= */
+// Pul serverda AdsGram "Reward URL" orqali qo'shiladi (+0.01 so'm), shuning uchun balansni biroz kutib yangilaymiz.
+async function showAd() {
+  if (!S.adBlock || !window.Adsgram) return false;
+  try { const res = await window.Adsgram.init({ blockId: S.adBlock }).show(); return !!res?.done; }
+  catch { return false; }
+}
+function refreshBalance() {
+  [2500, 7000].forEach(ms => setTimeout(async () => {
+    try { const r = await api("/api/ad-reward", "POST", {}); S.balance = r.balance; renderBalance(); } catch {}
+  }, ms));
+}
 $("#adBtn").onclick = async () => {
   if (!S.adBlock || !window.Adsgram) return toast("Reklama hozircha mavjud emas");
-  try {
-    const res = await window.Adsgram.init({ blockId: S.adBlock }).show();
-    if (res.done) {
-      const r = await api("/api/ad-reward", "POST", {});
-      S.balance = r.balance; renderBalance(); toast("Bonus qo‘shildi!");
-    }
-  } catch { toast("Reklama tugallanmadi"); }
+  const btn = $("#adBtn"); btn.disabled = true;
+  const done = await showAd();
+  btn.disabled = false;
+  if (done) { toast("Bonus hisobingizga qo‘shilmoqda..."); refreshBalance(); }
+  else toast("Reklama tugallanmadi");
 };
 
 init();
