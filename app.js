@@ -1,6 +1,6 @@
 /* ================= SOZLAMALAR ================= */
 // Backend (aiogram + aiohttp/FastAPI) manzili. Bo'sh bo'lsa demo rejim ishlaydi.
-const API_BASE = "";            // masalan: "https://sizning-domen.uz"
+const API_BASE = "https://sheyxshop.netlify.app";            // masalan: "https://sizning-domen.uz"
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 tg?.setBackgroundColor?.("#051F20"); tg?.setHeaderColor?.("#051F20");
