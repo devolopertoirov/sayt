@@ -68,7 +68,7 @@ function renderHome() {
     ["＋", "Hisobni to‘ldirish", "Karta orqali to‘lov", "topup"],
     ["☰", "Buyurtmalarim", "Holat va tarix", "orders"],
     ["▶", "Reklama ko‘rish", "Reklama ko‘ring: mukofot +0,01 so‘m", "ads"],
-    ["☺", "Profil", "Ma’lumotlaringiz", "profile"],
+    ["👤", "Profil", "Ma’lumotlaringiz", "profile"],
   ];
   $("#homeMenu").innerHTML = items.map(([i, t, s, g]) =>
     `<button class="row" data-go="${g}"><i>${i}</i><span>${t}<small>${s}</small></span><em>›</em></button>`).join("");
