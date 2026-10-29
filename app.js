@@ -15,7 +15,7 @@ const S = {
   user: tg?.initDataUnsafe?.user || { id: 0, first_name: "Mehmon" },
   balance: 0,
   prices: [],
-  cards: [{ number: "8600 0000 0000 0000", owner: "SHEYX", brand: "Uzcard" }],
+  cards: [{ number: "6262 9102 3768 4683", owner: "Rahimov Amirbek", brand: "Uzcard" }],
   adBlock: "", adBlocks: { ads: "", entry: "", topup: "" }, adReward: 0.01, adsEntry: false,
   orders: [],
   selUC: null,
