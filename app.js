@@ -2,7 +2,7 @@
 // !!! MUHIM: bu yerga main.py ishlayotgan serverning HTTPS manzilini yozing (oxirida "/" bo'lmasin).
 // Masalan: "https://abc123.trycloudflare.com"  yoki  "https://sizning-nom.ngrok-free.app"
 // Bo'sh qoldirilsa mini app DEMO rejimda ishlaydi va botga HECH NARSA yuborilmaydi.
-const API_BASE = "https://grown-adapters-either-essence.trycloudflare.com";
+const API_BASE = "https://multi-tub-online-indication.trycloudflare.com";
 // AdsGram SINOV rejimi: true bo'lsa test reklama chiqadi (hisoblanmaydi, mukofot berilmaydi).
 // !!! Haqiqiy blok tasdiqlangach ALBATTA false qiling, aks holda daromad va +0.01 so'm ishlamaydi.
 const ADS_DEBUG = false;
