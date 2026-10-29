@@ -93,6 +93,14 @@ function renderProfile() {
 }
 
 /* ================= MA'LUMOT YUKLASH ================= */
+function showOffline(msg) {          // xato doimiy ko'rinadi (toast 3 soniyada yo'qoladi) + qayta urinish tugmasi
+  const box = $("#cardList"); box.innerHTML = "";
+  const d = document.createElement("div"); d.className = "card";
+  const t = document.createElement("small"); t.textContent = "Serverga ulanib bo‘lmadi: " + msg;
+  const bt = document.createElement("button"); bt.className = "btn wide"; bt.style.marginTop = "10px"; bt.textContent = "Qayta urinish";
+  bt.onclick = () => loadConfig(true);
+  d.append(t, bt); box.appendChild(d);
+}
 async function loadConfig(first) {
   try {
     const c = await api("/api/config");
@@ -101,7 +109,7 @@ async function loadConfig(first) {
     S.adReward = c.ad_reward ?? 0.01; S.adsEntry = !!c.ads_entry;
   } catch (e) {
     if (e.message === "demo") { if (first) S.prices = DEMO_PRICES; }
-    else { if (first) toast("Serverga ulanib bo‘lmadi: " + e.message); return; }
+    else { showOffline(e.message); if (first) toast("Serverga ulanib bo‘lmadi: " + e.message); return; }
   }
   renderCards();
   renderBalance(); renderPrices();
