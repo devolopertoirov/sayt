@@ -2,10 +2,10 @@
 // !!! MUHIM: bu yerga main.py ishlayotgan serverning HTTPS manzilini yozing (oxirida "/" bo'lmasin).
 // Masalan: "https://abc123.trycloudflare.com"  yoki  "https://sizning-nom.ngrok-free.app"
 // Bo'sh qoldirilsa mini app DEMO rejimda ishlaydi va botga HECH NARSA yuborilmaydi.
-const API_BASE = "https://grown-adapters-either-essence.trycloudflare.com";
+const API_BASE = "https://news-designs-fought-montreal.trycloudflare.com";
 // AdsGram SINOV rejimi: true bo'lsa test reklama chiqadi (hisoblanmaydi, mukofot berilmaydi).
 // !!! Haqiqiy blok tasdiqlangach ALBATTA false qiling, aks holda daromad va +0.01 so'm ishlamaydi.
-const ADS_DEBUG = false;
+const ADS_DEBUG = true;
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 tg?.setBackgroundColor?.("#051F20"); tg?.setHeaderColor?.("#051F20");
@@ -15,8 +15,8 @@ const S = {
   user: tg?.initDataUnsafe?.user || { id: 0, first_name: "Mehmon" },
   balance: 0,
   prices: [],
-  card: { number: "6262 9102 3768 4683", owner: "Rahimov Amirbek" },
-  adBlock: "", adReward: 0.01, adsEntry: false,
+  cards: [{ number: "8600 0000 0000 0000", owner: "SHEYX", brand: "Uzcard" }],
+  adBlock: "", adBlocks: { ads: "", entry: "", topup: "" }, adReward: 0.01, adsEntry: false,
   orders: [],
   selUC: null,
 };
@@ -96,14 +96,14 @@ function renderProfile() {
 async function loadConfig(first) {
   try {
     const c = await api("/api/config");
-    S.prices = c.prices; S.card = c.card; S.adBlock = c.adsgram_block_id || ""; S.balance = c.balance || 0;
+    S.prices = c.prices; S.cards = c.cards || (c.card && c.card.number ? [c.card] : []); S.adBlocks = c.ad_blocks || { ads: c.adsgram_block_id || "", entry: "", topup: "" };
+    S.adBlock = S.adBlocks.ads || ""; S.balance = c.balance || 0;
     S.adReward = c.ad_reward ?? 0.01; S.adsEntry = !!c.ads_entry;
   } catch (e) {
     if (e.message === "demo") { if (first) S.prices = DEMO_PRICES; }
     else { if (first) toast("Serverga ulanib bo‘lmadi: " + e.message); return; }
   }
-  $("#cardNum").textContent = S.card.number;
-  $("#cardOwner").textContent = S.card.owner;
+  renderCards();
   renderBalance(); renderPrices();
   const rw = fmt(S.adReward);
   $("#adRewardAmt").textContent = "+" + rw + " so‘m";
@@ -122,7 +122,7 @@ async function init() {
     return;
   }
   // Mini appga kirganda 1 marta (eng katta admin yoqib qo'ygan bo'lsa). Foydalanuvchi yopib davom etishi mumkin.
-  if (S.adsEntry && tg?.initData) showAd().then(done => done && refreshBalance());
+  if (S.adsEntry && S.adBlocks.entry && tg?.initData) showAd(S.adBlocks.entry).then(done => done && refreshBalance());   // kirishdagi reklama: alohida blok
   // Bot (admin panel) tomonidagi o'zgarishlar — balans, narxlar, buyurtma holati — mini appda avtomatik yangilanadi.
   const sync = () => {
     if (document.hidden) return;
@@ -169,9 +169,26 @@ $("#buyBtn").onclick = async () => {
 };
 
 /* ================= TO'LDIRISH ================= */
-$("#cardNum").onclick = () => {
-  navigator.clipboard?.writeText(S.card.number.replace(/\s/g, "")); toast("Karta raqami nusxalandi");
-};
+const cardDigits = n => String(n || "").replace(/\D/g, "");
+const cardFmt = n => cardDigits(n).replace(/(.{4})/g, "$1 ").trim();
+function renderCards() {               // bir nechta karta: raqam yonida turi (Uzcard, Visa...) ko'rinadi
+  const box = $("#cardList"); box.innerHTML = "";
+  if (!S.cards.length) {
+    const d = document.createElement("div"); d.className = "card";
+    d.innerHTML = "<small>Hozircha to‘lov kartasi mavjud emas</small>"; box.appendChild(d); return;
+  }
+  S.cards.forEach(c => {
+    const d = document.createElement("div"); d.className = "card";
+    const t = document.createElement("small"); t.textContent = "Karta raqami"; d.appendChild(t);
+    const row = document.createElement("div"); row.className = "card-row";
+    const num = document.createElement("div"); num.className = "copy"; num.textContent = cardFmt(c.number) || "—";
+    num.onclick = () => { navigator.clipboard?.writeText(cardDigits(c.number)); toast("Karta raqami nusxalandi"); };
+    const br = document.createElement("span"); br.className = "brand brand-" + String(c.brand || "").toLowerCase(); br.textContent = c.brand || "Karta";
+    row.append(num, br); d.appendChild(row);
+    const ow = document.createElement("small"); ow.textContent = c.owner || ""; d.appendChild(ow);
+    box.appendChild(d);
+  });
+}
 const rc = $("#receipt");
 rc.onchange = () => {
   const f = rc.files[0], prev = $("#upPrev");
@@ -188,7 +205,7 @@ $("#topBtn").onclick = async () => {
   const fd = new FormData(); fd.append("receipt", f);
   const btn = $("#topBtn"); btn.disabled = true;
   // Chek yuborilganda reklama ko'rsatiladi (ixtiyoriy: yopilsa ham chek yuboriladi)
-  if (S.adBlock && tg?.initData) { const done = await showAd(); if (done) refreshBalance(); }
+  if (S.adBlocks.topup && tg?.initData) { const done = await showAd(S.adBlocks.topup); if (done) refreshBalance(); }   // chek reklamasi: alohida blok
   try { await api("/api/topup", "POST", fd); }
   catch (err) {
     if (err.message !== "demo") { btn.disabled = false; return toast(err.message); }
@@ -209,10 +226,10 @@ function loadAdsSdk() {            // SDK yuklanmagan bo'lsa, qayta yuklab ko'ra
     document.head.appendChild(sc);
   });
 }
-async function showAd() {
+async function showAd(blockId = S.adBlock) {   // har bir bo'lim o'z blokini beradi
   S.adErr = "";
-  if (!S.adBlock || !(await loadAdsSdk())) return false;
-  try { const res = await window.Adsgram.init(ADS_DEBUG ? { blockId: S.adBlock, debug: true, debugBannerType: "FullscreenMedia" } : { blockId: S.adBlock }).show(); return !!res?.done; }
+  if (!blockId || !(await loadAdsSdk())) return false;
+  try { const res = await window.Adsgram.init(ADS_DEBUG ? { blockId, debug: true, debugBannerType: "FullscreenMedia" } : { blockId }).show(); return !!res?.done; }
   catch (e) { S.adErr = e?.description || e?.message || ""; return false; }
 }
 function refreshBalance() {
